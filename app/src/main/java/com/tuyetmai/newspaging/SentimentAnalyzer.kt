@@ -31,27 +31,33 @@ class SentimentAnalyzer(context: Context) {
     }
 
     fun analyze(text: String): String {
-        // Giả sử text đã được vector hóa (hoặc tiền xử lý phù hợp)
-        // Ở đây mình mock 1 tensor đầu vào mẫu
+        // Vectorize the input text (convert the text into a numerical representation)
+        val vectorizedText = vectorizeText(text)
 
-        // Preprocess the text to convert it into a tensor
-        val input = TensorBuffer.createFixedSize(intArrayOf(1, 20), org.tensorflow.lite.DataType.FLOAT32)
-        input.loadArray(FloatArray(20) { 0.0f }) // Dummy data: replace this with actual text vectorization
+        // Create tensor with the correct size (1, 256)
+        val input = TensorBuffer.createFixedSize(intArrayOf(1, 256), org.tensorflow.lite.DataType.FLOAT32)
+        input.loadArray(vectorizedText)  // Load the vectorized data into the input tensor
 
-        // Define output tensor
-        val output = TensorBuffer.createFixedSize(intArrayOf(1, 3), org.tensorflow.lite.DataType.FLOAT32)
+        // Define output tensor (assuming 2 classes for sentiment: Negative, Positive)
+        val output = TensorBuffer.createFixedSize(intArrayOf(1, 2), org.tensorflow.lite.DataType.FLOAT32)
+
+        // Run the model with the input tensor and get the output
         interpreter?.run(input.buffer, output.buffer)
 
-        // Extract results
+        // Process the results
         val results = output.floatArray
         val maxIdx = results.indices.maxByOrNull { results[it] } ?: -1
 
         return when (maxIdx) {
             0 -> "Negative"
-            1 -> "Neutral"
-            2 -> "Positive"
+            1 -> "Positive"
             else -> "Unknown"
         }
+    }
+
+    fun vectorizeText(text: String): FloatArray {
+        // Convert the text into a numerical vector (dummy example for 256 elements)
+        return FloatArray(256) { 0.0f }  // Replace with actual vectorization logic
     }
 
     // Close the interpreter when no longer needed to free resources
